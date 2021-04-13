@@ -70,7 +70,7 @@
                     <geom pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" />
                     <geom pos="0.01849 0 0" quat="0.993291 0 -0.115641 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f1_tip" pos="0.01849 0 0" quat="0.993291 0 -0.115641 0" type="mesh" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
-                    <geom name="f1l2_pulley" type="cylinder" size=".005 0.006" class="ezgripper_mech" euler="1.57 0 0"/>
+                    <geom name="f1l2_pulley" type="cylinder" size=".006 0.006" class="ezgripper_mech" euler="1.57 0 0"/>
                     <site name="f1l2_peg" pos=".011 0 -.004" size=".002"/>
                     <site name="f1l2_pin" pos=".0185 0 0" size=".002"/>
                 </body>
@@ -92,7 +92,7 @@
                     <geom pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" />
                     <geom pos="0.01849 0 0" quat="0.993291 0 -0.115641 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f2_tip" pos="0.01849 0 0" quat="0.993291 0 -0.115641 0" type="mesh" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
-                    <geom name="f2l2_pulley" type="cylinder" size=".005 0.006" class="ezgripper_mech" euler="1.57 0 0"/>
+                    <geom name="f2l2_pulley" type="cylinder" size=".006 0.006" class="ezgripper_mech" euler="1.57 0 0"/>
                     <site name="f2l2_peg" pos=".011 0 -.004" size=".002"/>
                     <site name="f2l2_pin" pos=".0185 0 0" size=".002"/>
                 </body>
