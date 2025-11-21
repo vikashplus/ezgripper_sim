@@ -66,7 +66,7 @@
                 <site name="f1l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F1_L2" pos="0.052 0 0">
-                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-0.2618 1.7" stiffness="0.05114105365" springref="-1.57"/>
+                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0.2618 1.7" stiffness="0.05114105365" springref="-1.57"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" />
                     <geom name="f1l2_collision" type="box" size="0.002 0.002 0.002" pos="0.002 0 0" contype="2" conaffinity="2" rgba="0 1 0 0.3"/>
@@ -90,7 +90,7 @@
                 <site name="f2l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F2_L2" pos="0.052 0 0">
-                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-0.2618 1.7" stiffness="0.05114105365" springref="-1.57"/>
+                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0.2618 1.7" stiffness="0.05114105365" springref="-1.57"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" />
                     <geom name="f2l2_collision" type="box" size="0.002 0.002 0.002" pos="0.002 0 0" contype="4" conaffinity="4" rgba="0 1 1 0.3"/>
