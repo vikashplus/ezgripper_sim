@@ -96,14 +96,48 @@ goto_position(effort, position)
 - Spring-loaded opening (tendon closes, springs open)
 
 **Contact Dynamics**:
-- Finger-to-finger contact
-- Finger-to-object contact
-- Adaptive wrapping behavior
+- **Mesh-based collision**: All finger/palm meshes provide collision surfaces
+- **L1-L2 hard stop**: Physical mesh collision defines preload position
+- **Intra-finger collision**: L1 and L2 links collide to create spring preload
+- **Grasping surfaces**: Palm, L1, L2, and finger tips all participate in grasping
+- **Adaptive wrapping**: Fingers conform to object shape via under-actuation
+
+**Spring Configuration (Preload Mechanism)**:
+
+The gripper uses **collision-based preload** to simulate the real hardware behavior:
+
+1. **Palm-L1 Joint**:
+   - `stiffness="0.05114105365"` (STRONG spring)
+   - `springref="-3.14"` (-180°, outside joint range)
+   - Range: `-1.57075 to 0.27` (-90° to 15°)
+   - **Effect**: Constant force pulling joint toward open position
+
+2. **L1-L2 Joint**:
+   - `stiffness="0.02459949416"` (WEAK spring)
+   - `springref="-1.57"` (-90°, outside joint range)
+   - Range: `0.5236 to 1.7` (30° to 97°)
+   - **Effect**: Constant force pulling joint toward open position
+   - **Hard stop**: L1-L2 mesh collision stops opening at ~30°
+   - **Preload**: Spring compressed against collision creates resting force
+
+**Why This Works**:
+- MuJoCo doesn't have explicit preload parameters
+- Setting `springref` outside joint range creates constant force
+- Physical collision between L1 and L2 meshes acts as hard stop
+- Spring force compressed against hard stop = mechanical preload
+- This matches real hardware where springs are pre-compressed at assembly
+
+**Under-Actuation Sequence**:
+1. **Open state**: Springs pull joints open until L1-L2 collision stops them
+2. **Tendon pull**: Overcomes spring preload to close gripper
+3. **Contact**: L1 contacts object first, stops moving
+4. **Wrap**: L2 continues closing around object (progressive grasp)
 
 **Joint Properties**:
 - Damping: 0.005
-- Spring references for natural positions
+- Spring references outside ranges for constant preload force
 - Limited ranges matching real hardware
+- Collision filtering: `contype=3 conaffinity=3` for all grasping surfaces
 
 ## Model Structure
 
