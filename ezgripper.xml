@@ -62,7 +62,7 @@
 
             <!-- FINGER1 -©vk©-->
             <body name="F1_L1" pos="0.0755 0.03 0" quat="0.707105 -0.707108 0 0">
-                <joint name="F1_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="0.35" limited="true"/>
+                <joint name="F1_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="-1.57" limited="true"/>
                 <geom class="ezgripper_viz" mesh="SAKE_Finger_L1_IM" rgba="1 1 1 1"/>
                 <geom name="f1l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="1" conaffinity="1" friction="1.5 0.01 0.0001"/>
                 <geom name="f1l1_pulley" type="cylinder" size=".006 0.006" pos="0.022 0 -.002" class="ezgripper_mech" euler="1.57 0 0"/>
@@ -71,7 +71,7 @@
                 <site name="f1l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F1_L2" pos="0.052 0 0">
-                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="1.7" limited="true"/>
+                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="0" limited="true"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f1l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="1" conaffinity="1" friction="1.5 0.01 0.0001"/>
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
@@ -84,7 +84,7 @@
 
             <!-- FINGER2 -©vk©-->
             <body name="F2_L1" pos="0.0755 -0.03 0" quat="0.707105 0.707108 0 0">
-                <joint name="F2_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="0.35" limited="true"/>
+                <joint name="F2_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="-1.57" limited="true"/>
                 <geom class="ezgripper_viz" mesh="SAKE_Finger_L1_IM" rgba="1 1 1 1"/>
                 <geom name="f2l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="1" conaffinity="1" friction="1.5 0.01 0.0001"/>
                 <geom name="f2l1_pulley"  type="cylinder" size=".006 0.006" pos="0.022 0 -.002" class="ezgripper_mech" euler="1.57 0 0"/>
@@ -93,7 +93,7 @@
                 <site name="f2l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F2_L2" pos="0.052 0 0">
-                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="1.7" limited="true"/>
+                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="0" limited="true"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f2l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="1" conaffinity="1" friction="1.5 0.01 0.0001"/>
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
