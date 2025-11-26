@@ -9,8 +9,8 @@
     <compiler angle="radian" settotalmass=".340"/>
     <size njmax="500" nconmax="100" />
     
-    <option>
-        <flag contact="enable" override="enable"/>
+    <option timestep="0.001" iterations="100" solver="Newton" tolerance="1e-10" impratio="2">
+        <flag contact="enable" override="enable" gravity="enable" limit="enable"/>
     </option>
     <asset>
         <mesh name="SAKE_Single_Mount" file="meshes/SAKE_Single_Mount.stl" />
@@ -35,8 +35,6 @@
     </default>
 
     <contact>
-        <exclude body1="mount" body2="F1_L1"/>
-        <exclude body1="mount" body2="F2_L1"/>
         <pair geom1="f1_tip" geom2="f2_tip" condim="1"/>
         <pair geom1="f1_tip" geom2="f2l1" condim="1"/>
         <pair geom1="f2_tip" geom2="f1l1" condim="1"/>
@@ -59,21 +57,30 @@
             <site name="palm_peg0" pos=".022 0 0" size=".002"/>
             <site name="palm_peg1" pos=".063 0 0" size=".002"/>
             <site name="palm_peg2" pos=".085 0 0" size=".002"/>
+            <!-- Mechanical stops on palm to limit finger rotation -->
+            <geom name="palm_stop_f1" type="box" size="0.005 0.015 0.005" pos="0.0855 0.03 0" contype="4" conaffinity="4" rgba="0.2 0.8 0.2 0.3"/>
+            <geom name="palm_stop_f2" type="box" size="0.005 0.015 0.005" pos="0.0855 -0.03 0" contype="4" conaffinity="4" rgba="0.2 0.8 0.2 0.3"/>
 
             <!-- FINGER1 -©vk©-->
             <body name="F1_L1" pos="0.0755 0.03 0" quat="0.707105 -0.707108 0 0">
-                <joint name="F1_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="-2.0" damping="0.1" limited="true"/>
+                <joint name="F1_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="0.02459949416" springref="-3.14" damping="1.0" limited="true" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/>
                 <geom class="ezgripper_viz" mesh="SAKE_Finger_L1_IM" rgba="1 1 1 1"/>
-                <geom name="f1l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="3" conaffinity="3" friction="1.5 0.01 0.0001"/>
+                <geom name="f1l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="3" conaffinity="3" friction="1.5 0.01 0.0001" rgba="1 1 1 1"/>
+                <!-- Mechanical stop: collision box to prevent over-rotation -->
+                <geom name="f1l1_stop" type="box" size="0.005 0.015 0.005" pos="0.01 0 0" contype="4" conaffinity="4" rgba="0.8 0.2 0.2 0.3"/>
+                <!-- Mechanical stop for L1-L2 joint -->
+                <geom name="f1l1_l2stop" type="box" size="0.005 0.01 0.005" pos="0.057 0 0" contype="5" conaffinity="5" rgba="0.2 0.8 0.8 0.3"/>
                 <geom name="f1l1_pulley" type="cylinder" size=".006 0.006" pos="0.022 0 -.002" class="ezgripper_mech" euler="1.57 0 0"/>
                 <site name="f1l1_pulleyside" pos=".022 0 .007" size=".002"/>
                 <site name="f1l1_peg0" pos=".0115 0 -.007" size=".002"/>
                 <site name="f1l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F1_L2" pos="0.052 0 0">
-                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="-0.33" damping="0.1" limited="true"/>
+                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="0.05114105365" springref="-1.57" damping="1.0" limited="true" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f1l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="3" conaffinity="3" friction="1.5 0.01 0.0001"/>
+                    <!-- Mechanical stop: collision box to prevent backward rotation -->
+                    <geom name="f1l2_stop" type="box" size="0.005 0.01 0.005" pos="0.005 0 0" contype="5" conaffinity="5" rgba="0.2 0.2 0.8 0.3"/>
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f1_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f1l2_pulley" type="cylinder" size=".006 0.006" pos="0 0 0" class="ezgripper_mech" euler="1.57 0 0"/>
@@ -84,18 +91,24 @@
 
             <!-- FINGER2 -©vk©-->
             <body name="F2_L1" pos="0.0755 -0.03 0" quat="0.707105 0.707108 0 0">
-                <joint name="F2_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="1.0" springref="-2.0" damping="0.1" limited="true"/>
+                <joint name="F2_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57 0.35" stiffness="0.02459949416" springref="-3.14" damping="1.0" limited="true" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/>
                 <geom class="ezgripper_viz" mesh="SAKE_Finger_L1_IM" rgba="1 1 1 1"/>
                 <geom name="f2l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="3" conaffinity="3" friction="1.5 0.01 0.0001"/>
+                <!-- Mechanical stop: collision box to prevent over-rotation -->
+                <geom name="f2l1_stop" type="box" size="0.005 0.015 0.005" pos="0.01 0 0" contype="4" conaffinity="4" rgba="0.8 0.2 0.2 0.3"/>
+                <!-- Mechanical stop for L1-L2 joint -->
+                <geom name="f2l1_l2stop" type="box" size="0.005 0.01 0.005" pos="0.057 0 0" contype="5" conaffinity="5" rgba="0.2 0.8 0.8 0.3"/>
                 <geom name="f2l1_pulley"  type="cylinder" size=".006 0.006" pos="0.022 0 -.002" class="ezgripper_mech" euler="1.57 0 0"/>
                 <site name="f2l1_pulleyside" pos=".022 0 .007" size=".002"/>
                 <site name="f2l1_peg0" pos=".0115 0 -.007" size=".002"/>
                 <site name="f2l1_peg1" pos=".0355 0 -.006" size=".002"/>
 
                 <body name="F2_L2" pos="0.052 0 0">
-                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="1.0" springref="-0.33" damping="0.1" limited="true"/>
+                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.7" stiffness="0.05114105365" springref="-1.57" damping="1.0" limited="true" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f2l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="3" conaffinity="3" friction="1.5 0.01 0.0001"/>
+                    <!-- Mechanical stop: collision box to prevent backward rotation -->
+                    <geom name="f2l2_stop" type="box" size="0.005 0.01 0.005" pos="0.005 0 0" contype="5" conaffinity="5" rgba="0.2 0.2 0.8 0.3"/>
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f2_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f2l2_pulley" type="cylinder" size=".006 0.006" pos="0 0 0" class="ezgripper_mech" euler="1.57 0 0"/>
@@ -115,7 +128,7 @@
 
     <tendon>
         <!-- Finger 1 tendon - independent, no sliding -->
-        <spatial name="finger1_tendon" limited="false" range="0.145 0.146">
+        <spatial name="finger1_tendon" limited="false" range="0.100 0.170">
             <site site="palm_peg0"/>
             <site site="palm_peg1"/>
             <geom geom="palm_pulley_f1" sidesite="palm_peg2"/>
@@ -128,7 +141,7 @@
         </spatial>
         
         <!-- Finger 2 tendon - independent, no sliding -->
-        <spatial name="finger2_tendon" limited="false" range="0.145 0.146">
+        <spatial name="finger2_tendon" limited="false" range="0.100 0.170">
             <site site="palm_peg0"/>
             <site site="palm_peg1"/>
             <geom geom="palm_pulley_f2" sidesite="palm_peg2"/>
@@ -142,15 +155,15 @@
     </tendon>
 
     <actuator>
-        <!-- Velocity actuators - control tendon length (velocity) -->
-        <!-- kv: velocity gain (damping) -->
-        <!-- forcerange limits maximum force - allows stalling under load -->
-        <position tendon="finger1_tendon" kp="0" kv="0" ctrllimited="true" ctrlrange="0.120 0.200" forcelimited="true" forcerange="-1e-10 1e-10" name="gripper_actuator_f1"/>
-        <position tendon="finger2_tendon" kp="0" kv="0" ctrllimited="true" ctrlrange="0.120 0.200" forcelimited="true" forcerange="-1e-10 1e-10" name="gripper_actuator_f2"/>
+        <!-- Position actuators - control tendon length with proper force -->
+        <!-- kp: position gain, kv: velocity gain -->
+        <!-- forcerange limits maximum force - increased to allow tendon control -->
+        <position tendon="finger1_tendon" kp="10000" kv="100" ctrllimited="true" ctrlrange="0.100 0.200" forcelimited="true" forcerange="-1000 1000" name="gripper_actuator_f1"/>
+        <position tendon="finger2_tendon" kp="10000" kv="100" ctrllimited="true" ctrlrange="0.100 0.200" forcelimited="true" forcerange="-1000 1000" name="gripper_actuator_f2"/>
     </actuator>
 
     <keyframe>
-        <key name="init" qpos="-2.07 -0.33 -2.07 -0.33"/>
+        <!-- Removed init keyframe to allow tendon actuators to control positions -->
     </keyframe>
 
 </mujoco>

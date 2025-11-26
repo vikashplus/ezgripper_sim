@@ -37,8 +37,9 @@ print(f"  - Actuators: {model.nu}")
 print(f"  - Tendons: {model.ntendon}")
 print()
 
-# Get actuator ID
-gripper_actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, 'gripper_actuator')
+# Get actuator IDs (both fingers controlled identically)
+gripper_f1_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, 'gripper_actuator_f1')
+gripper_f2_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, 'gripper_actuator_f2')
 
 # Demo sequence
 print("Demo Sequence:")
@@ -61,56 +62,37 @@ time.sleep(2)
 
 # Simulation parameters
 sim_time = 0.0
-phase = "open"
-phase_start_time = 0.0
+phase_info = {"phase": "open"}
 
-def update_control(sim_time):
-    """Update gripper control based on demo phase"""
-    global phase, phase_start_time
+def update_control(model, data, phase_info):
+    """Update gripper control - cycle between max open and max close every 5 seconds"""
+    current_time = data.time
     
-    elapsed = sim_time - phase_start_time
+    # Calculate cycle: 5 seconds per direction
+    cycle_time = current_time % 10.0  # 10 second total cycle (5s close, 5s open)
     
-    if phase == "open":
-        # Phase 1: Gripper open (2 seconds)
-        data.ctrl[gripper_actuator_id] = 0.0  # Fully open
-        if elapsed > 2.0:
-            phase = "closing"
-            phase_start_time = sim_time
-            print(f"\n[{sim_time:.2f}s] CLOSING gripper...")
+    # Tendon length range: 0.135 (closed) to 0.160 (open)
+    open_length = 0.160   # meters (fully open - extended more)
+    closed_length = 0.135  # meters (fully closed)
     
-    elif phase == "closing":
-        # Phase 2: Close gripper slowly (3 seconds)
-        # Gradually increase closing force
-        progress = min(elapsed / 3.0, 1.0)
-        data.ctrl[gripper_actuator_id] = -1.0 * progress  # -1.0 = MAXIMUM effort
-        
-        if elapsed > 3.0:
-            phase = "holding"
-            phase_start_time = sim_time
-            print(f"[{sim_time:.2f}s] HOLDING grasp at MAXIMUM strength...")
-            print("  → Watch: L1 stopped by ball, L2 wrapped around!")
-    
-    elif phase == "holding":
-        # Phase 3: Hold grasp (3 seconds)
-        data.ctrl[gripper_actuator_id] = -1.0  # MAXIMUM grasp strength
-        if elapsed > 3.0:
-            phase = "opening"
-            phase_start_time = sim_time
-            print(f"\n[{sim_time:.2f}s] OPENING gripper...")
-    
-    elif phase == "opening":
-        # Phase 4: Open gripper (2 seconds)
-        data.ctrl[gripper_actuator_id] = 0.0  # Release
-        if elapsed > 2.0:
-            phase = "done"
-            phase_start_time = sim_time
-            print(f"[{sim_time:.2f}s] Demo complete!")
-            print("\nYou can continue to interact with the simulation.")
-            print("Close the viewer window to exit.")
-    
-    elif phase == "done":
-        # Demo finished, keep gripper open
-        data.ctrl[gripper_actuator_id] = 0.0
+    if cycle_time < 5.0:
+        # Closing phase (0-5 seconds) - gradually decrease tendon length
+        progress = cycle_time / 5.0
+        target_length = open_length - (open_length - closed_length) * progress
+        data.ctrl[gripper_f1_id] = target_length
+        data.ctrl[gripper_f2_id] = target_length
+        if phase_info['phase'] != "closing":
+            phase_info['phase'] = "closing"
+            print(f"[{current_time:.2f}s] CLOSING (target length: {target_length:.4f}m)")
+    else:
+        # Opening phase (5-10 seconds) - gradually increase tendon length
+        progress = (cycle_time - 5.0) / 5.0
+        target_length = closed_length + (open_length - closed_length) * progress
+        data.ctrl[gripper_f1_id] = target_length
+        data.ctrl[gripper_f2_id] = target_length
+        if phase_info['phase'] != "opening":
+            phase_info['phase'] = "opening"
+            print(f"[{current_time:.2f}s] OPENING (target length: {target_length:.4f}m)")
 
 # Launch viewer with custom controller
 print("\n" + "=" * 60)
@@ -129,7 +111,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         step_start = time.time()
         
         # Update control
-        update_control(sim_time)
+        update_control(model, data, phase_info)
         
         # Step simulation
         mujoco.mj_step(model, data)
