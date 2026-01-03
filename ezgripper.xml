@@ -9,7 +9,7 @@
     <compiler angle="radian" settotalmass=".340"/>
     <size njmax="500" nconmax="100" />
     
-    <option timestep="0.001" iterations="1000" solver="Newton" tolerance="1e-14" impratio="100">
+    <option timestep="0.0005" iterations="1000" solver="Newton" tolerance="1e-14" impratio="100">
         <flag contact="enable" override="disable" gravity="enable" limit="enable"/>
     </option>
     <asset>
@@ -37,7 +37,7 @@
     <contact>
         <exclude body1="mount" body2="F1_L1"/>
         <exclude body1="mount" body2="F2_L1"/>
-        <pair geom1="f1_tip" geom2="f2_tip" condim="6" margin="0.000001" gap="0.0"/>
+        <pair geom1="f1_tip" geom2="f2_tip" condim="6" margin="0.001" gap="0.0" solref="0.0001 1" solimp="0.99 0.999 0.0001 0.5 2"/>
         <pair geom1="f1_tip" geom2="f2l1" condim="6" margin="0.0001" gap="0.0"/>
         <pair geom1="f2_tip" geom2="f1l1" condim="6" margin="0.0001" gap="0.0"/>
     </contact>
@@ -83,11 +83,11 @@
                 <site name="f1l1_peg1" pos=".0355 0 0" size=".002"/>
 
                 <body name="F1_L2" pos="0.052 0 0">
-                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-0.01 1.2" stiffness="0.05114105365" springref="0" damping="0.05" limited="true" margin="0.001"/>
+                    <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-1.57 1.2" stiffness="5.0" springref="0" damping="0.5" limited="true" margin="0.001"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f1l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="0" conaffinity="0" friction="1.5 0.01 0.0001"/>
-                                        <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
-                    <geom name="f1_tip" pos="0.01849 0 0" type="box" size="0.015 0.010 0.005" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
+                    <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
+                    <geom name="f1_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
 
                     <site name="f1l2_peg" pos=".011 0 0" size=".002"/>
                     <site name="f1l2_pin" pos=".0185 0 0" size=".002"/>
@@ -110,11 +110,11 @@
                 <site name="f2l1_peg1" pos=".0355 0 0" size=".002"/>
 
                 <body name="F2_L2" pos="0.052 0 0">
-                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-0.01 1.2" stiffness="0.05114105365" springref="0" damping="0.05" limited="true" margin="0.001"/>
+                    <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="-1.57 1.2" stiffness="5.0" springref="0" damping="0.5" limited="true" margin="0.001"/>
                     <geom pos="0 0 0" class="ezgripper_viz" mesh="SAKE_Finger_L2_IM" rgba="1 1 1 1"/>
                     <geom name="f2l2" pos="0 0 0" type="mesh" mesh="SAKE_Finger_L2_IM" contype="0" conaffinity="0" friction="1.5 0.01 0.0001"/>
-                                        <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
-                    <geom name="f2_tip" pos="0.01849 0 0" type="box" size="0.015 0.010 0.005" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
+                    <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
+                    <geom name="f2_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
 
                     <site name="f2l2_peg" pos=".011 0 0" size=".002"/>
                     <site name="f2l2_pin" pos=".0185 0 0" size=".002"/>
@@ -130,6 +130,39 @@
 
     </worldbody>
 
+    <!-- ================================================================== -->
+    <!-- GRIPPER PHYSICS EXPLANATION                                        -->
+    <!-- ================================================================== -->
+    <!-- 
+    JOINT ANGLES:
+      - Range: -90° (OPEN) to +25° (CLOSED)
+      - Negative angles = fingers spread apart (OPEN)
+      - Positive angles = fingers together (CLOSED)
+    
+    SPRINGS (springref=-3.14 rad = -180°):
+      - Springs are PRELOADED to pull toward -180° (very closed)
+      - This creates tension against the -90° hard stop
+      - At -90° (OPEN): Springs in tension, pressing against hard stops
+      - Springs try to close gripper, but are blocked by hard stops at -90°
+    
+    TENDON ACTION:
+      - Tendon pulls AGAINST spring tension to close gripper
+      - Pulling tendon moves fingers from -90° (OPEN) toward +25° (CLOSED)
+      - Releasing tendon lets springs pull back to -90° (OPEN)
+    
+    TENDON LENGTHS (measured from kinematic analysis):
+      - At -90° (OPEN):   0.162865m (maximum length)
+      - At +25° (CLOSED): 0.146451m (minimum length)
+      - Travel: 0.016414m (16.4mm)
+      - Tendon SHORTENS when closing (pulling against springs)
+    
+    CONTROL:
+      - Positive control (+) = Pull tendon = CLOSE (toward +25°)
+      - Negative control (-) = Release tendon = Springs open to -90°
+      - Zero control (0) = Springs pull to -90° (OPEN)
+    -->
+    <!-- ================================================================== -->
+    
     <tendon>
         <spatial name="finger1_tendon" limited="false" range="0.100 0.200">
             <site site="palm_peg0"/>
@@ -156,15 +189,22 @@
 
     <!-- EQUALITY CONSTRAINT: Enforce symmetric closing -->
     <!-- Both tendons must move the same distance (tree structure with equal branches) -->
+    <!-- solref: very stiff spring (0.001s time constant, 1.0 damping ratio) -->
+    <!-- solimp: hard constraint (dmin=0.99, dmax=0.9999, very small penetration allowed) -->
     <equality>
-        <tendon tendon1="finger1_tendon" tendon2="finger2_tendon"/>
+        <tendon tendon1="finger1_tendon" tendon2="finger2_tendon" 
+                solref="0.001 1" solimp="0.99 0.9999 0.0001 0.5 2"/>
     </equality>
 
     <!-- SINGLE ACTUATOR: Controls both tendons via equality constraint -->
     <!-- Force distributes based on load (finger with more resistance gets more force) -->
+    <!-- Motor control: velocity-based with high gear ratio to overcome springs -->
     <actuator>
-        <general tendon="finger1_tendon" ctrllimited="true" ctrlrange="-2.0 2.0" name="gripper_actuator"/>
+        <motor tendon="finger1_tendon" ctrllimited="true" ctrlrange="-1.0 1.0" 
+               gear="-200" name="gripper_actuator"/>
         <!-- finger2_tendon is coupled via equality constraint, no separate actuator needed -->
+        <!-- Negative gear: positive control = pull tendon = CLOSE (toward +25°) -->
+        <!-- Springs push OPEN (toward -90°), tendon pulls CLOSE (toward +25°) -->
     </actuator>
 
     <keyframe>
