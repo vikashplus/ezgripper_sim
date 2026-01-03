@@ -1,98 +1,161 @@
 #!/usr/bin/env python3
 """
-Analyze forces preventing L1 from closing
+Analyze forces and constraints preventing gripper from opening.
 """
+
 import mujoco
 import numpy as np
 import os
 
 # Load model
-script_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(script_dir, "ezgripper.xml")
+model_path = os.path.join(os.path.dirname(__file__), 'ezgripper.xml')
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
 
-# Get IDs
-gripper_actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, 'gripper_actuator')
-tendon_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TENDON, 'flex_tendon')
-f1_palm_l1_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, 'F1_palm_knuckle')
-f1_l1_l2_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, 'F1_knuckle_tip')
+print("="*80)
+print("FORCE ANALYSIS - Why isn't the gripper opening?")
+print("="*80)
 
-# Get qpos addresses
-f1_palm_adr = model.jnt_qposadr[f1_palm_l1_id]
-f1_l1l2_adr = model.jnt_qposadr[f1_l1_l2_id]
+# Set tendon to maximum length to avoid constraint
+data.ctrl[:] = 0.180
 
-print("=" * 80)
-print("FORCE ANALYSIS: Why L1 Won't Close")
-print("=" * 80)
+# Run for a few steps to settle
+for _ in range(1000):
+    mujoco.mj_step(model, data)
 
-# Test at different control levels
-for ctrl_val in [0.0, -0.25, -0.5, -0.75, -1.0]:
-    mujoco.mj_resetData(model, data)
-    data.ctrl[gripper_actuator_id] = ctrl_val
-    
-    # Let it settle
-    for _ in range(1000):
-        mujoco.mj_step(model, data)
-    
-    # Get joint angles
-    palm_angle = data.qpos[f1_palm_adr]
-    l1l2_angle = data.qpos[f1_l1l2_adr]
-    
-    # Get spring forces
-    palm_springref = model.qpos_spring[f1_palm_adr]
-    palm_stiffness = model.jnt_stiffness[f1_palm_l1_id]
-    palm_deflection = palm_angle - palm_springref
-    palm_spring_force = palm_stiffness * palm_deflection
-    
-    l1l2_springref = model.qpos_spring[f1_l1l2_adr]
-    l1l2_stiffness = model.jnt_stiffness[f1_l1_l2_id]
-    l1l2_deflection = l1l2_angle - l1l2_springref
-    l1l2_spring_force = l1l2_stiffness * l1l2_deflection
-    
-    # Get tendon force (actuator_force is just ctrl, need to multiply by gear)
-    actuator_gear = model.actuator_gear[gripper_actuator_id, 0]
-    tendon_force = data.ctrl[gripper_actuator_id] * actuator_gear
-    
-    # Get moment arms
-    qvel_palm_adr = model.jnt_dofadr[f1_palm_l1_id]
-    qvel_l1l2_adr = model.jnt_dofadr[f1_l1_l2_id]
-    moment_arm_palm = data.ten_J[tendon_id, qvel_palm_adr]
-    moment_arm_l1l2 = data.ten_J[tendon_id, qvel_l1l2_adr]
-    
-    # Calculate torques
-    tendon_torque_palm = tendon_force * moment_arm_palm
-    tendon_torque_l1l2 = tendon_force * moment_arm_l1l2
-    
-    # Net torques
-    net_torque_palm = tendon_torque_palm + palm_spring_force
-    net_torque_l1l2 = tendon_torque_l1l2 + l1l2_spring_force
-    
-    print(f"\n{'=' * 80}")
-    print(f"Control: {ctrl_val:.2f}")
-    print(f"{'=' * 80}")
-    print(f"\nPalm-L1 Joint:")
-    print(f"  Angle: {np.rad2deg(palm_angle):.1f}°")
-    print(f"  Spring force: {palm_spring_force:.6f} N·m (pulling open)")
-    print(f"  Moment arm: {moment_arm_palm:.6f} m/rad")
-    print(f"  Tendon force: {tendon_force:.3f} N")
-    print(f"  Tendon torque: {tendon_torque_palm:.6f} N·m (closing)")
-    print(f"  NET torque: {net_torque_palm:.6f} N·m")
-    
-    print(f"\nL1-L2 Joint:")
-    print(f"  Angle: {np.rad2deg(l1l2_angle):.1f}°")
-    print(f"  Spring force: {l1l2_spring_force:.6f} N·m (pulling open)")
-    print(f"  Moment arm: {moment_arm_l1l2:.6f} m/rad")
-    print(f"  Tendon force: {tendon_force:.3f} N")
-    print(f"  Tendon torque: {tendon_torque_l1l2:.6f} N·m (closing)")
-    print(f"  NET torque: {net_torque_l1l2:.6f} N·m")
-    
-    # Ratio analysis
-    if abs(moment_arm_l1l2) > 0.0001:
-        moment_ratio = abs(moment_arm_palm / moment_arm_l1l2)
-        print(f"\nMoment Arm Ratio (Palm/L1L2): {moment_ratio:.3f}")
-        print(f"  → Palm-L1 has {moment_ratio:.1f}x MORE leverage than L1-L2")
+# Get joint states
+f1_palm = data.qpos[0]
+f1_tip = data.qpos[1]
 
-print("\n" + "=" * 80)
-print("ANALYSIS COMPLETE")
-print("=" * 80)
+print(f"\nCurrent Joint Positions:")
+print(f"  F1_palm: {np.rad2deg(f1_palm):.2f}° (range: -90° to 25°)")
+print(f"  F1_tip:  {np.rad2deg(f1_tip):.2f}° (range: 0° to 97°)")
+
+# Calculate spring torques
+spring_torque_palm = -model.jnt_stiffness[0] * (f1_palm - model.qpos_spring[0])
+spring_torque_tip = -model.jnt_stiffness[1] * (f1_tip - model.qpos_spring[1])
+
+print(f"\nSpring Configuration:")
+print(f"  Palm-L1: stiffness={model.jnt_stiffness[0]:.6f} N·m/rad, springref={model.qpos_spring[0]:.4f} rad ({np.rad2deg(model.qpos_spring[0]):.1f}°)")
+print(f"  L1-L2:   stiffness={model.jnt_stiffness[1]:.6f} N·m/rad, springref={model.qpos_spring[1]:.4f} rad ({np.rad2deg(model.qpos_spring[1]):.1f}°)")
+
+print(f"\nSpring Torques (negative = opening direction):")
+print(f"  Palm-L1: {spring_torque_palm:+.6f} N·m")
+print(f"  L1-L2:   {spring_torque_tip:+.6f} N·m")
+
+# Get tendon info
+mujoco.mj_tendon(model, data)
+tendon1_length = data.ten_length[0] * 1000
+tendon1_force = data.actuator_force[0]
+
+print(f"\nTendon State:")
+print(f"  Commanded length: {data.ctrl[0]*1000:.2f} mm")
+print(f"  Actual length:    {tendon1_length:.2f} mm")
+print(f"  Actuator force:   {tendon1_force:.2f} N")
+print(f"  Range: {model.actuator_ctrlrange[0,0]*1000:.0f} to {model.actuator_ctrlrange[0,1]*1000:.0f} mm")
+
+# Calculate tendon moment arms (how much torque the tendon creates per unit force)
+# This requires computing the Jacobian
+mujoco.mj_forward(model, data)
+
+print(f"\nTendon Moment Arms:")
+print(f"  (Calculated by numerical differentiation)")
+
+# Calculate moment arms numerically
+epsilon = 0.001  # Small angle change
+original_qpos = data.qpos.copy()
+
+# Palm-L1 moment arm
+data.qpos[0] = original_qpos[0] + epsilon
+mujoco.mj_kinematics(model, data)
+mujoco.mj_tendon(model, data)
+length_plus = data.ten_length[0]
+
+data.qpos[0] = original_qpos[0] - epsilon
+mujoco.mj_kinematics(model, data)
+mujoco.mj_tendon(model, data)
+length_minus = data.ten_length[0]
+
+moment_arm_palm = (length_plus - length_minus) / (2 * epsilon)
+data.qpos[:] = original_qpos
+
+# L1-L2 moment arm
+data.qpos[1] = original_qpos[1] + epsilon
+mujoco.mj_kinematics(model, data)
+mujoco.mj_tendon(model, data)
+length_plus = data.ten_length[0]
+
+data.qpos[1] = original_qpos[1] - epsilon
+mujoco.mj_kinematics(model, data)
+mujoco.mj_tendon(model, data)
+length_minus = data.ten_length[0]
+
+moment_arm_tip = (length_plus - length_minus) / (2 * epsilon)
+data.qpos[:] = original_qpos
+
+print(f"  Tendon 1 w.r.t. Palm-L1: {moment_arm_palm:.6f} m/rad")
+print(f"  Tendon 1 w.r.t. L1-L2:   {moment_arm_tip:.6f} m/rad")
+
+# Calculate effective torques from tendon
+tendon_torque_palm = -tendon1_force * moment_arm_palm  # Negative because tendon pulls
+tendon_torque_tip = -tendon1_force * moment_arm_tip
+
+print(f"\nTendon Torques (from actuator force):")
+print(f"  Palm-L1: {tendon_torque_palm:+.6f} N·m")
+print(f"  L1-L2:   {tendon_torque_tip:+.6f} N·m")
+
+# Total torques
+total_palm = spring_torque_palm + tendon_torque_palm
+total_tip = spring_torque_tip + tendon_torque_tip
+
+print(f"\nTotal Torques (spring + tendon):")
+print(f"  Palm-L1: {total_palm:+.6f} N·m")
+print(f"  L1-L2:   {total_tip:+.6f} N·m")
+
+# Check constraint forces
+print(f"\nConstraint Forces:")
+print(f"  Number of active constraints: {data.nefc}")
+if data.nefc > 0:
+    print(f"  Constraint forces (first 10):")
+    for i in range(min(10, data.nefc)):
+        print(f"    [{i}]: {data.efc_force[i]:.4f} N")
+
+# Analyze why gripper won't open
+print("\n" + "="*80)
+print("DIAGNOSIS:")
+print("="*80)
+
+if abs(tendon1_length - data.ctrl[0]*1000) > 10:
+    print("❌ PROBLEM: Tendon length doesn't match command!")
+    print(f"   Commanded: {data.ctrl[0]*1000:.2f} mm, Actual: {tendon1_length:.2f} mm")
+    print(f"   Difference: {tendon1_length - data.ctrl[0]*1000:.2f} mm")
+    print("   → Tendon is physically constrained and cannot reach commanded length")
+    print("   → This prevents springs from opening the gripper")
+
+if abs(spring_torque_palm) < 0.1:
+    print("⚠️  Spring torque is weak (< 0.1 N·m)")
+    print("   → May not be strong enough to overcome friction/damping")
+
+if abs(tendon1_force) > 10:
+    print(f"⚠️  High tendon force ({tendon1_force:.1f} N) even at max length")
+    print("   → Tendon is under tension, resisting spring opening force")
+
+# Check moment arms
+if abs(moment_arm_palm) < 0.001:
+    print("❌ PROBLEM: Palm-L1 moment arm is near zero!")
+    print("   → Tendon has no mechanical advantage at this joint")
+
+if abs(moment_arm_tip) < 0.001:
+    print("❌ PROBLEM: L1-L2 moment arm is near zero!")
+    print("   → Tendon has no mechanical advantage at this joint")
+
+print("\n" + "="*80)
+print("RECOMMENDATION:")
+print("="*80)
+print("The L2 pulley is essential for:")
+print("  1. Providing correct tendon path length for full range of motion")
+print("  2. Creating proper moment arm at L1-L2 joint")
+print("  3. Allowing springs to push fingers to fully open position")
+print("\nWithout the L2 pulley, the tendon path is too short and constrains")
+print("the gripper from opening, even when commanded to maximum length.")
+print("="*80)

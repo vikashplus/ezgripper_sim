@@ -1,65 +1,77 @@
 #!/usr/bin/env python3
 """
-Test L1-L2 joint opening collision
+Test joint limits and mechanical constraints.
 """
+
 import mujoco
 import numpy as np
 import os
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(script_dir, "ezgripper.xml")
-
-print("TESTING L1-L2 JOINT OPENING COLLISION")
-print("=" * 50)
-
+# Load model
+model_path = os.path.join(os.path.dirname(__file__), 'ezgripper.xml')
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
 
-# Get joint IDs
-f1_tip_jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, 'F1_knuckle_tip')
-f2_tip_jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, 'F2_knuckle_tip')
+print("="*80)
+print("JOINT LIMITS TEST")
+print("="*80)
 
-print("Joint ranges:")
-print(f"F1_knuckle_tip: {np.degrees(model.jnt_range[f1_tip_jid][0]):.1f}° to {np.degrees(model.jnt_range[f1_tip_jid][1]):.1f}°")
-print(f"F2_knuckle_tip: {np.degrees(model.jnt_range[f2_tip_jid][0]):.1f}° to {np.degrees(model.jnt_range[f2_tip_jid][1]):.1f}°")
-print()
+# Get IDs
+f1_palm_id = model.joint('F1_palm_knuckle').id
+f1_tip_id = model.joint('F1_knuckle_tip').id
+f2_palm_id = model.joint('F2_palm_knuckle').id
+f2_tip_id = model.joint('F2_knuckle_tip').id
 
-# Test opening the L1-L2 joints
-print("TESTING JOINT OPENING:")
-opening_angles = [0, -0.2, -0.4, -0.6]  # Try to open beyond -0.5 limit
+f1_actuator_id = model.actuator('gripper_actuator_f1').id
+f2_actuator_id = model.actuator('gripper_actuator_f2').id
 
-for angle in opening_angles:
-    # Set joint angles
-    data.qpos[1] = angle  # F1 L1-L2 joint
-    data.qpos[3] = angle  # F2 L1-L2 joint
+# Check joint limits
+print(f"\nJoint Limits:")
+print(f"F1 Palm: [{np.degrees(model.jnt_range[f1_palm_id][0]):.1f}°, {np.degrees(model.jnt_range[f1_palm_id][1]):.1f}°]")
+print(f"F1 Tip:  [{np.degrees(model.jnt_range[f1_tip_id][0]):.1f}°, {np.degrees(model.jnt_range[f1_tip_id][1]):.1f}°]")
+print(f"F2 Palm: [{np.degrees(model.jnt_range[f2_palm_id][0]):.1f}°, {np.degrees(model.jnt_range[f2_palm_id][1]):.1f}°]")
+print(f"F2 Tip:  [{np.degrees(model.jnt_range[f2_tip_id][0]):.1f}°, {np.degrees(model.jnt_range[f2_tip_id][1]):.1f}°]")
 
+print(f"\nTesting joint limit enforcement:")
+
+# Test extreme closing to see if limits are enforced
+mujoco.mj_resetData(model, data)
+data.ctrl[f1_actuator_id] = 0.100  # Extreme closing
+data.ctrl[f2_actuator_id] = 0.100
+
+# Run for many steps
+for i in range(500):
     mujoco.mj_step(model, data)
 
-    # Check for contacts
-    ncon = data.ncon
-    l1_l2_contacts = 0
+# Check final positions
+f1_palm = np.degrees(data.qpos[f1_palm_id])
+f1_tip = np.degrees(data.qpos[f1_tip_id])
+f2_palm = np.degrees(data.qpos[f2_palm_id])
+f2_tip = np.degrees(data.qpos[f2_tip_id])
 
-    if ncon > 0:
-        for i in range(ncon):
-            geom1 = data.contact[i].geom1
-            geom2 = data.contact[i].geom2
-            geom1_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, geom1)
-            geom2_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, geom2)
+print(f"\nFinal positions with extreme closing:")
+print(f"F1: Palm={f1_palm:6.1f}°, Tip={f1_tip:6.1f}°")
+print(f"F2: Palm={f2_palm:6.1f}°, Tip={f2_tip:6.1f}°")
 
-            if ('l1_collision' in geom1_name and 'l2_collision' in geom2_name) or \
-               ('l1_collision' in geom2_name and 'l2_collision' in geom1_name):
-                l1_l2_contacts += 1
+# Check if joints are at limits
+f1_palm_at_min = abs(f1_palm - np.degrees(model.jnt_range[f1_palm_id][0])) < 1.0
+f1_palm_at_max = abs(f1_palm - np.degrees(model.jnt_range[f1_palm_id][1])) < 1.0
+f1_tip_at_min = abs(f1_tip - np.degrees(model.jnt_range[f1_tip_id][0])) < 1.0
+f1_tip_at_max = abs(f1_tip - np.degrees(model.jnt_range[f1_tip_id][1])) < 1.0
 
-    angle_deg = np.degrees(angle)
-    within_limit = angle >= model.jnt_range[f1_tip_jid][0]
+print(f"\nJoint limit status:")
+print(f"F1 Palm: at_min={f1_palm_at_min}, at_max={f1_palm_at_max}")
+print(f"F1 Tip:  at_min={f1_tip_at_min}, at_max={f1_tip_at_max}")
 
-    print("3.1f")
+# Check for contacts
+print(f"\nContacts: {data.ncon}")
+if data.ncon > 0:
+    for i in range(min(data.ncon, 5)):  # Show first 5 contacts
+        contact = data.contact[i]
+        geom1_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, contact.geom1)
+        geom2_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, contact.geom2)
+        print(f"  {i}: {geom1_name} <-> {geom2_name}")
 
-print()
-print("RESULTS:")
-if l1_l2_contacts > 0:
-    print("✅ L1-L2 COLLISION DETECTED! Joint opening is physically stopped.")
-    print("This simulates the hard stops in the real EZGripper.")
-else:
-    print("❌ No L1-L2 collision detected. Collision boxes may not be positioned correctly.")
-    print("The joint can open freely without physical constraints.")
+print("\n" + "="*80)
+print("JOINT LIMITS TEST COMPLETE")
+print("="*80)

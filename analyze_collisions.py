@@ -1,61 +1,90 @@
 #!/usr/bin/env python3
+"""
+Analyze all collision sources in the current EZGripper model.
+"""
+
 import mujoco
 import numpy as np
+import os
 
 # Load model
-model = mujoco.MjModel.from_xml_path('ezgripper.xml')
+model_path = os.path.join(os.path.dirname(__file__), 'ezgripper.xml')
+model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
 
-# Apply keyframe for stable start
-mujoco.mj_resetDataKeyframe(model, data, 0)
+print("="*80)
+print("COLLISION ANALYSIS - CURRENT MODEL")
+print("="*80)
 
-print("=" * 70)
-print("COLLISION ANALYSIS - PALM-L1 AND L1-L2 OVER-ROTATION")
-print("=" * 70)
+print(f"\nTOTAL GEOMS: {model.ngeom}")
+print(f"TOTAL BODIES: {model.nbody}")
 
-# Run simulation and check for collisions
-for step in range(500):
-    mujoco.mj_step(model, data)
+print("\n" + "="*50)
+print("ALL GEOMS WITH COLLISION PROPERTIES")
+print("="*50)
+
+for i in range(model.ngeom):
+    name = model.geom(i).name if model.geom(i).name else f"geom_{i}"
+    contype = model.geom_contype[i]
+    conaffinity = model.geom_conaffinity[i]
+    body = model.body(model.geom_bodyid[i]).name if model.body(model.geom_bodyid[i]).name else f"body_{model.geom_bodyid[i]}"
     
-    # Check collisions every 50 steps
-    if step % 50 == 0:
-        print(f"\nStep {step:3d} (t={data.time:.3f}s):")
-        
-        # Get current joint angles
-        angles = []
-        for i in range(model.njnt):
-            name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i)
-            if name:
-                angle_deg = np.degrees(data.qpos[i])
-                angles.append(f"{name}: {angle_deg:6.1f}°")
-        
-        print(f"  Joint angles: {', '.join(angles)}")
-        
-        # Check for contacts
-        ncon = data.ncon
-        if ncon > 0:
-            print(f"  COLLISIONS DETECTED ({ncon} contacts):")
-            for i in range(ncon):
-                contact = data.contact[i]
-                geom1_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, contact.geom1)
-                geom2_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, contact.geom2)
-                dist = contact.dist
-                # Use contact.efc_force for force if available, otherwise skip force display
-                print(f"    Contact {i}: {geom1_name} ↔ {geom2_name}")
-                print(f"      Distance: {dist:.6f}m")
-        else:
-            print(f"  No collisions detected")
-        
-        # Check if joints are beyond limits
-        for i in range(model.njnt):
-            name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i)
-            if name:
-                qpos = data.qpos[i]
-                range_min, range_max = model.jnt_range[i]
-                if qpos < range_min or qpos > range_max:
-                    print(f"  VIOLATION: {name} beyond limits!")
-                    print(f"    Position: {np.degrees(qpos):.1f}°, Range: [{np.degrees(range_min):.1f}°, {np.degrees(range_max):.1f}°]")
+    print(f"\nGeom {i}: {name}")
+    print(f"  Body: {body}")
+    print(f"  Contype: {contype} (binary: {bin(contype)})")
+    print(f"  Conaffinity: {conaffinity} (binary: {bin(conaffinity)})")
+    
+    if contype == 0 and conaffinity == 0:
+        print(f"  → NO COLLISION (disabled)")
+    else:
+        print(f"  → COLLISION ENABLED")
 
-print("\n" + "=" * 70)
-print("Collision analysis complete!")
-print("=" * 70)
+print("\n" + "="*50)
+print("COLLISION MATRIX SUMMARY")
+print("="*50)
+
+# Group by contype/conaffinity patterns
+collision_groups = {}
+for i in range(model.ngeom):
+    name = model.geom(i).name if model.geom(i).name else f"geom_{i}"
+    contype = model.geom_contype[i]
+    conaffinity = model.geom_conaffinity[i]
+    
+    key = (contype, conaffinity)
+    if key not in collision_groups:
+        collision_groups[key] = []
+    collision_groups[key].append((i, name))
+
+for (contype, conaffinity), geoms in collision_groups.items():
+    print(f"\nContype={contype}, Conaffinity={conaffinity}:")
+    for geom_id, geom_name in geoms:
+        print(f"  Geom {geom_id}: {geom_name}")
+
+print("\n" + "="*50)
+print("CURRENT CONTACTS")
+print("="*50)
+
+# Reset and step once to see contacts
+mujoco.mj_resetData(model, data)
+mujoco.mj_step(model, data)
+
+print(f"Active contacts: {data.ncon}")
+for i in range(data.ncon):
+    contact = data.contact[i]
+    geom1_name = model.geom(contact.geom1).name if model.geom(contact.geom1).name else f"geom_{contact.geom1}"
+    geom2_name = model.geom(contact.geom2).name if model.geom(contact.geom2).name else f"geom_{contact.geom2}"
+    print(f"  Contact {i}: {geom1_name} ↔ {geom2_name} (dist={contact.dist:.4f})")
+
+print("\n" + "="*80)
+print("COLLISION DESIGN ANALYSIS")
+print("="*80)
+print("Based on recent commits, the collision system uses:")
+print("1. Mechanical stops (contype 4 & 5, 6)")
+print("2. Finger mesh collisions (contype 3)")
+print("3. Palm collision surfaces")
+print("\nKey collision groups:")
+print("- contype=3: Finger mesh collisions (fingers collide with each other)")
+print("- contype=4: Palm-L1 mechanical stops")
+print("- contype=5: L1-L2 mechanical stops") 
+print("- contype=6: Palm upper limit stops")
+print("="*80)
