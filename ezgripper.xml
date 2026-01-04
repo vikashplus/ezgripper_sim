@@ -54,11 +54,12 @@
             <geom pos="0.016 0 0" type="mesh" mesh="SAKE_Palm_IM" contype="0" conaffinity="0" friction="0.6 0.005 0.0001"/>
             <!-- Palm face collision box for solid contact -->
             <!-- <geom name="palm_face" type="box" size="0.04 0.04 0.01" pos="0.08 0 0" contype="3" conaffinity="3" friction="0.6 0.005 0.0001" rgba="0.5 0.5 0.5 0.3"/> -->
-            <geom name="palm_pulley_f1" type="cylinder" size=".006 0.006" pos="0.07255 0 0" class="ezgripper_mech"/>
-            <geom name="palm_pulley_f2" type="cylinder" size=".006 0.006" pos="0.07255 0 0" class="ezgripper_mech"/>
+            <geom name="palm_pulley_f1" type="cylinder" size=".006 0.006" pos="0.07255 0.03 0" class="ezgripper_mech"/>
+            <geom name="palm_pulley_f2" type="cylinder" size=".006 0.006" pos="0.07255 -0.03 0" class="ezgripper_mech"/>
             <site name="palm_peg0" pos=".022 0 0" size=".002"/>
             <site name="palm_peg1" pos=".063 0 0" size=".002"/>
-            <site name="palm_peg2" pos=".085 0 0" size=".002"/>
+            <site name="palm_peg2_f1" pos=".085 0.03 0" size=".002"/>
+            <site name="palm_peg2_f2" pos=".085 -0.03 0" size=".002"/>
             <!-- Mechanical stops on palm to limit finger rotation -->
             <!-- Lower limit stops (prevent over-rotation past -90°) -->
             <geom name="palm_stop_f1_lower" type="box" size="0.005 0.015 0.005" pos="0.0855 0.03 0" contype="4" conaffinity="4" rgba="0.2 0.8 0.2 0.3"/>
@@ -177,7 +178,7 @@
         <spatial name="finger1_tendon" limited="false" range="0.100 0.200">
             <site site="palm_peg0"/>
             <site site="palm_peg1"/>
-            <geom geom="palm_pulley_f1" sidesite="palm_peg2"/>
+            <geom geom="palm_pulley_f1" sidesite="palm_peg2_f1"/>
             <site site="f1l1_peg0"/>
             <geom geom="f1l1_pulley" sidesite="f1l1_pulleyside"/>
             <site site="f1l1_peg1"/>
@@ -189,7 +190,7 @@
         <spatial name="finger2_tendon" limited="false" range="0.100 0.200">
             <site site="palm_peg0"/>
             <site site="palm_peg1"/>
-            <geom geom="palm_pulley_f2" sidesite="palm_peg2"/>
+            <geom geom="palm_pulley_f2" sidesite="palm_peg2_f2"/>
             <site site="f2l1_peg0"/>
             <geom geom="f2l1_pulley" sidesite="f2l1_pulleyside"/>
             <site site="f2l1_peg1"/>
