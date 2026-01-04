@@ -79,10 +79,10 @@
                 <geom name="f1l1_l2stop_zero" type="box" size="0.008 0.015 0.008" pos="0.052 0 -0.008" contype="1" conaffinity="1" rgba="0.2 0.8 0.8 0.3"/>
                 <!-- Mechanical stop for L1-L2 joint at 100° (prevents over-closing) -->
                 <geom name="f1l1_l2stop_max" type="box" size="0.008 0.015 0.008" pos="0.057 0.008 0" contype="1" conaffinity="1" rgba="0.2 0.8 0.8 0.3"/>
-                <geom name="f1l1_pulley" type="cylinder" size=".006 0.006" pos="0.017186 -0.002343 0" class="ezgripper_mech" euler="1.57 0 0"/>
-                <site name="f1l1_pulleyside" pos=".017186 0.004 0" size=".002"/>
-                <site name="f1l1_peg0" pos=".007705 -0.004546 0" size=".002"/>
-                <site name="f1l1_peg1" pos=".031016 -0.005796 0" size=".002"/>
+                <geom name="f1l1_pulley" type="cylinder" size=".006 0.006" pos="0.022 -0.003 0" class="ezgripper_mech" euler="1.57 0 0"/>
+                <site name="f1l1_pulleyside" pos=".022 0.004 0" size=".002"/>
+                <site name="f1l1_peg0" pos=".01146 -0.00676 0" size=".002"/>
+                <site name="f1l1_peg1" pos=".03545 -0.0058 0" size=".002"/>
 
                 <body name="F1_L2" pos="0.052 0 0">
                     <joint name="F1_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.745" stiffness="0.00771" springref="-2.09" damping="0.05" limited="true" margin="0.001"/>
@@ -94,8 +94,8 @@
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f1_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
 
-                    <site name="f1l2_peg" pos=".0072 -.00255 0" size=".002"/>
-                    <site name="f1l2_pin" pos=".013709 -0.000188 0" size=".002"/>
+                    <site name="f1l2_peg" pos=".01122 -.00395 0" size=".002"/>
+                    <site name="f1l2_pin" pos=".01849 -0.00025 0" size=".002"/>
                 </body>
             </body>
 
@@ -111,10 +111,10 @@
                 <geom name="f2l1_l2stop_zero" type="box" size="0.008 0.015 0.008" pos="0.052 0 -0.008" contype="1" conaffinity="1" rgba="0.2 0.8 0.8 0.3"/>
                 <!-- Mechanical stop for L1-L2 joint at 100° (prevents over-closing) -->
                 <geom name="f2l1_l2stop_max" type="box" size="0.008 0.015 0.008" pos="0.057 0.008 0" contype="1" conaffinity="1" rgba="0.2 0.8 0.8 0.3"/>
-                <geom name="f2l1_pulley"  type="cylinder" size=".006 0.006" pos="0.017186 -0.002343 0" class="ezgripper_mech" euler="1.57 0 0"/>
-                <site name="f2l1_pulleyside" pos=".017186 0.004 0" size=".002"/>
-                <site name="f2l1_peg0" pos=".007705 -0.004546 0" size=".002"/>
-                <site name="f2l1_peg1" pos=".031016 -0.005796 0" size=".002"/>
+                <geom name="f2l1_pulley"  type="cylinder" size=".006 0.006" pos="0.022 -0.003 0" class="ezgripper_mech" euler="1.57 0 0"/>
+                <site name="f2l1_pulleyside" pos=".022 0.004 0" size=".002"/>
+                <site name="f2l1_peg0" pos=".01146 -0.00676 0" size=".002"/>
+                <site name="f2l1_peg1" pos=".03545 -0.0058 0" size=".002"/>
 
                 <body name="F2_L2" pos="0.052 0 0">
                     <joint name="F2_knuckle_tip" pos="0 0 0" axis="0 1 0" range="0 1.745" stiffness="0.00771" springref="-2.09" damping="0.05" limited="true" margin="0.001"/>
@@ -126,8 +126,8 @@
                     <geom pos="0.01849 0 0" class="ezgripper_viz" mesh="SAKE_Finger_Pad_IM" rgba=".2 .2 .2 1"/>
                     <geom name="f2_tip" pos="0.01849 0 0" type="mesh" mesh="SAKE_Finger_Pad_IM" contype="1" conaffinity="1" friction="5.0 0.005 0.0001" rgba=".2 .2 .2 1"/>
 
-                    <site name="f2l2_peg" pos=".0072 -.00255 0" size=".002"/>
-                    <site name="f2l2_pin" pos=".013709 -0.000188 0" size=".002"/>
+                    <site name="f2l2_peg" pos=".01122 -.00395 0" size=".002"/>
+                    <site name="f2l2_pin" pos=".01849 -0.00025 0" size=".002"/>
                 </body>
             </body>
         </body>
