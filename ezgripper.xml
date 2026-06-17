@@ -7,17 +7,13 @@
 	License	:: Under Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 ====================================================== -©vk©-->
     <compiler angle="radian" settotalmass=".340"/>
-    <size njmax="500" nconmax="100" />
-    
-    <option timestep="0.0005" iterations="1000" solver="Newton" tolerance="1e-14" impratio="100">
-        <flag contact="enable" override="disable" gravity="enable" limit="enable"/>
-    </option>
+
     <asset>
-        <mesh name="SAKE_Single_Mount" file="meshes/SAKE_Single_Mount.stl" />
-        <mesh name="SAKE_Palm_IM" file="meshes/SAKE_Palm_IM.stl" />
-        <mesh name="SAKE_Finger_L1_IM" file="meshes/SAKE_Finger_L1_IM.stl" />
-        <mesh name="SAKE_Finger_L2_IM" file="meshes/SAKE_Finger_L2_IM.stl" />
-        <mesh name="SAKE_Finger_Pad_IM" file="meshes/SAKE_Finger_Pad_IM.stl" />
+        <mesh name="SAKE_Single_Mount" file="../ezgripper_sim/meshes/SAKE_Single_Mount.stl" />
+        <mesh name="SAKE_Palm_IM" file="../ezgripper_sim/meshes/SAKE_Palm_IM.stl" />
+        <mesh name="SAKE_Finger_L1_IM" file="../ezgripper_sim/meshes/SAKE_Finger_L1_IM.stl" />
+        <mesh name="SAKE_Finger_L2_IM" file="../ezgripper_sim/meshes/SAKE_Finger_L2_IM.stl" />
+        <mesh name="SAKE_Finger_Pad_IM" file="../ezgripper_sim/meshes/SAKE_Finger_Pad_IM.stl" />
     </asset>
 
     <default>
@@ -28,7 +24,7 @@
                 <geom contype="0" conaffinity="0" group="1" type="mesh" rgba=".17 .42 .63 1"/>
             </default>
             <default class="ezgripper_mech">
-                <geom contype="0" conaffinity="0" group="1" type="cylinder" rgba="1 0 0 1"/>
+                <geom contype="0" conaffinity="0" group="2" type="cylinder" rgba="1 0 0 1"/>
                 <site rgba="1 0 0 1"/>
             </default>
         </default>
@@ -43,11 +39,9 @@
     </contact>
 
     <worldbody>
-        <geom name='floor' pos='0.1 0 0' size='.4 .4 .125' type='plane' condim='3'/>
-        <light directional='false' diffuse='.8 .8 .8' specular='0.3 0.3 0.3' pos='0 0 1.0' dir='0 0 -1'/>
 
         <!-- PALM -©vk©-->
-        <body name="mount" pos="0 0 .1" childclass="ezgripper">
+        <body name="mount" pos="0 0 0" childclass="ezgripper">
             <geom class="ezgripper_viz" mesh="SAKE_Single_Mount" />
             <geom type="mesh" mesh="SAKE_Single_Mount"/>
             <geom pos="0.016 0 0" class="ezgripper_viz" mesh="SAKE_Palm_IM"/>
@@ -72,7 +66,7 @@
             <body name="F1_L1" pos="0.07255 0.03 0" quat="0.707105 -0.707108 0 0">
                 <joint name="F1_palm_knuckle" pos="0 0 0" axis="0 1 0" range="-1.57075 0.436" stiffness="0.00593" springref="-2.09" damping="0.05" limited="true" margin="0.001"/>
                 <geom class="ezgripper_viz" mesh="SAKE_Finger_L1_IM" rgba="1 1 1 1"/>
-                <geom name="f1l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="1" conaffinity="1" friction="3.0 0.01 0.0001" rgba="1 1 1 1"/>
+                <geom name="f1l1" type="mesh" mesh="SAKE_Finger_L1_IM" contype="1" conaffinity="1" friction="3.0 0.01 0.0001"/>
                 <!-- Mechanical stops: collision boxes to prevent over-rotation -->
                 <geom name="f1l1_stop_lower" type="box" size="0.008 0.020 0.008" pos="0.015 0 0" contype="1" conaffinity="1" rgba="0.8 0.2 0.2 0.3"/>
                 <geom name="f1l1_stop_upper" type="box" size="0.008 0.020 0.008" pos="-0.010 0 0" contype="1" conaffinity="1" rgba="0.8 0.8 0.2 0.3"/>
@@ -133,47 +127,41 @@
             </body>
         </body>
 
-        <!-- VERTICAL CYLINDER PEDESTAL -->
-        <!-- <body name="cylinder_pedestal" pos="0.13 0 0.1">
-            <freejoint/>
-            <geom name="pedestal" type="cylinder" size="0.0335 0.1" rgba="0.8 0.8 0.1 1" contype="3" conaffinity="3"/>
-        </body> -->
-
     </worldbody>
 
     <!-- ================================================================== -->
     <!-- GRIPPER PHYSICS EXPLANATION                                        -->
     <!-- ================================================================== -->
-    <!-- 
+    <!--
     JOINT ANGLES:
       - Range: -90° (OPEN) to +25° (CLOSED)
       - Negative angles = fingers spread apart (OPEN)
       - Positive angles = fingers together (CLOSED)
-    
+
     SPRINGS (springref=-3.14 rad = -180°):
       - Springs are PRELOADED to pull toward -180° (very closed)
       - This creates tension against the -90° hard stop
       - At -90° (OPEN): Springs in tension, pressing against hard stops
       - Springs try to close gripper, but are blocked by hard stops at -90°
-    
+
     TENDON ACTION:
       - Tendon pulls AGAINST spring tension to close gripper
       - Pulling tendon moves fingers from -90° (OPEN) toward +25° (CLOSED)
       - Releasing tendon lets springs pull back to -90° (OPEN)
-    
+
     TENDON LENGTHS (measured from kinematic analysis):
       - At -90° (OPEN):   0.162865m (maximum length)
       - At +25° (CLOSED): 0.146451m (minimum length)
       - Travel: 0.016414m (16.4mm)
       - Tendon SHORTENS when closing (pulling against springs)
-    
+
     CONTROL:
       - Positive control (+) = Pull tendon = CLOSE (toward +25°)
       - Negative control (-) = Release tendon = Springs open to -90°
       - Zero control (0) = Springs pull to -90° (OPEN)
     -->
     <!-- ================================================================== -->
-    
+
     <tendon>
         <spatial name="finger1_tendon" limited="false" range="0.100 0.200">
             <site site="palm_peg0"/>
@@ -186,7 +174,7 @@
             <site site="f1l2_peg"/>
             <site site="f1l2_pin"/>
         </spatial>
-        
+
         <spatial name="finger2_tendon" limited="false" range="0.100 0.200">
             <site site="palm_peg0"/>
             <site site="palm_peg1"/>
@@ -205,23 +193,23 @@
     <!-- solref: very stiff spring (0.001s time constant, 1.0 damping ratio) -->
     <!-- solimp: hard constraint (dmin=0.99, dmax=0.9999, very small penetration allowed) -->
     <equality>
-        <tendon tendon1="finger1_tendon" tendon2="finger2_tendon" 
+        <tendon tendon1="finger1_tendon" tendon2="finger2_tendon"
                 solref="0.001 1" solimp="0.99 0.9999 0.0001 0.5 2"/>
     </equality>
+
+    <sensor>
+        <tendonpos name="gripper_tendon" tendon="finger1_tendon"/>
+    </sensor>
 
     <!-- SINGLE ACTUATOR: Controls both tendons via equality constraint -->
     <!-- Force distributes based on load (finger with more resistance gets more force) -->
     <!-- Motor control: velocity-based with high gear ratio to overcome springs -->
     <actuator>
-        <motor tendon="finger1_tendon" ctrllimited="true" ctrlrange="-1.0 1.0" 
+        <motor tendon="finger1_tendon" ctrllimited="true" ctrlrange="-0.1 0.1"
                gear="-200" name="gripper_actuator"/>
         <!-- finger2_tendon is coupled via equality constraint, no separate actuator needed -->
         <!-- Negative gear: positive control = pull tendon = CLOSE (toward +25°) -->
         <!-- Springs push OPEN (toward -90°), tendon pulls CLOSE (toward +25°) -->
     </actuator>
-
-    <keyframe>
-        <!-- Removed init keyframe to allow tendon actuators to control positions -->
-    </keyframe>
 
 </mujoco>
