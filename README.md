@@ -2,8 +2,6 @@
 
 High-fidelity [MuJoCo](https://mujoco.org) model for the **SAKE Robotics EZGripper** robotic gripper with realistic tendon-driven physics.
 
-<img src="ezgripper.png" alt="EZGripper MuJoCo simulation" width="400"/>
-
 ## Overview
 
 This repository contains a physics-accurate MuJoCo model of the SAKE Robotics EZGripper Dual (Gen1/Gen2), featuring:
@@ -23,20 +21,41 @@ This repository contains a physics-accurate MuJoCo model of the SAKE Robotics EZ
 pip3 install mujoco
 
 # Clone this repository
-git clone https://github.com/SAKErobotics/ezgripper_sim.git
-cd ezgripper_sim
-
-# Test the model
-python3 test_gripper.py
+git clone https://github.com/SAKErobotics/MuJoCo_ezgripper_sim.git
+cd MuJoCo_ezgripper_sim
 ```
 
-### Interactive Viewer
+### Running Tests
 
 ```bash
-python3 test_gripper.py
+# Test 1: Wrapping grasp demonstration
+python3 tests/test_grasp_cylinder.py
+
+# Test 2: Pinch grasp demonstration  
+python3 tests/test_pinch_cylinder.py
+
+# Test 3: Basic spring behavior verification
+python3 tests/test_passive_springs.py
+
+# Test 4: Tendon actuation demonstration
+python3 tests/test_active_closing.py
 ```
 
-Use the MuJoCo viewer sliders to control the gripper actuator.
+## Files
+
+### Model Files
+- `ezgripper.xml` - Main working model with cylinder object for grasping demos
+- `ezgripper_only.xml` - Gripper-only model for robot integration (no worldbody)
+- `models/working/ezgripper_working.xml` - Reference baseline model
+
+### Test Files
+- `tests/test_grasp_cylinder.py` - Demonstrates wrapping grasp behavior
+- `tests/test_pinch_cylinder.py` - Demonstrates pinch grasp behavior
+- `tests/test_passive_springs.py` - Verifies spring behavior without actuation
+- `tests/test_active_closing.py` - Demonstrates tendon-driven closing
+
+### Mesh Files
+- `meshes/` - All STL mesh files for gripper geometry
 
 ## EZGripper Specifications
 
@@ -96,67 +115,14 @@ goto_position(effort, position)
 - Spring-loaded opening (tendon closes, springs open)
 
 **Contact Dynamics**:
-- **Mesh-based collision**: All finger/palm meshes provide collision surfaces
-- **L1-L2 hard stop**: Physical mesh collision defines preload position
-- **Intra-finger collision**: L1 and L2 links collide to create spring preload
-- **Grasping surfaces**: Palm, L1, L2, and finger tips all participate in grasping
-- **Adaptive wrapping**: Fingers conform to object shape via under-actuation
-
-**Spring Configuration (Preload Mechanism)**:
-
-The gripper uses **collision-based preload** to simulate the real hardware behavior:
-
-1. **Palm-L1 Joint**:
-   - `stiffness="0.05114105365"` (STRONG spring)
-   - `springref="-3.14"` (-180°, outside joint range)
-   - Range: `-1.57075 to 0.27` (-90° to 15°)
-   - **Effect**: Constant force pulling joint toward open position
-
-2. **L1-L2 Joint**:
-   - `stiffness="0.02459949416"` (WEAK spring)
-   - `springref="-1.57"` (-90°, outside joint range)
-   - Range: `0.5236 to 1.7` (30° to 97°)
-   - **Effect**: Constant force pulling joint toward open position
-   - **Hard stop**: L1-L2 mesh collision stops opening at ~30°
-   - **Preload**: Spring compressed against collision creates resting force
-
-**Why This Works**:
-- MuJoCo doesn't have explicit preload parameters
-- Setting `springref` outside joint range creates constant force
-- Physical collision between L1 and L2 meshes acts as hard stop
-- Spring force compressed against hard stop = mechanical preload
-- This matches real hardware where springs are pre-compressed at assembly
-
-**Under-Actuation Sequence**:
-1. **Open state**: Springs pull joints open until L1-L2 collision stops them
-2. **Tendon pull**: Overcomes spring preload to close gripper
-3. **Contact**: L1 contacts object first, stops moving
-4. **Wrap**: L2 continues closing around object (progressive grasp)
+- Finger-to-finger contact
+- Finger-to-object contact
+- Adaptive wrapping behavior
 
 **Joint Properties**:
 - Damping: 0.005
-- Spring references outside ranges for constant preload force
+- Spring references for natural positions
 - Limited ranges matching real hardware
-- Collision filtering: `contype=3 conaffinity=3` for all grasping surfaces
-
-## Model Structure
-
-```
-ezgripper.xml           # Main MuJoCo model
-├── mount               # Gripper base/mount
-├── F1_L1              # Finger 1, Link 1 (proximal)
-│   └── F1_L2          # Finger 1, Link 2 (distal)
-├── F2_L1              # Finger 2, Link 1 (proximal)
-│   └── F2_L2          # Finger 2, Link 2 (distal)
-└── flex_tendon        # Tendon connecting all links
-
-meshes/
-├── SAKE_Single_Mount.stl
-├── SAKE_Palm_IM.stl
-├── SAKE_Finger_L1_IM.stl
-├── SAKE_Finger_L2_IM.stl
-└── SAKE_Finger_Pad_IM.stl
-```
 
 ## Integration with Robots
 
@@ -166,7 +132,7 @@ To integrate the EZGripper into your robot model:
 
 1. **Include the gripper body** (without worldbody):
 ```xml
-<include file="ezgripper_body.xml"/>
+<include file="ezgripper_only.xml"/>
 ```
 
 2. **Attach to your end-effector**:
@@ -182,10 +148,6 @@ To integrate the EZGripper into your robot model:
    - Default: Gripper X-axis points forward
    - Rotate as needed for your application
 
-### Example: Minilift SCARA Integration
-
-See `examples/minilift_integration.xml` for a complete example of integrating the EZGripper with a SCARA arm.
-
 ## MuJoCo Version Compatibility
 
 - ✅ **MuJoCo 3.0+**: Fully tested and supported
@@ -194,13 +156,6 @@ See `examples/minilift_integration.xml` for a complete example of integrating th
 **Tested with**:
 - MuJoCo 3.3.7 on Ubuntu 24.04
 - Python 3.12
-
-## Files
-
-- `ezgripper.xml` - Complete standalone model with floor
-- `test_gripper.py` - Interactive test script
-- `meshes/` - STL mesh files
-- `ezgripper.png` - Preview image
 
 ## Credits
 
@@ -223,5 +178,5 @@ Apache License 2.0 - See LICENSE file
 ## Support
 
 For questions or issues:
-- GitHub Issues: https://github.com/SAKErobotics/ezgripper_sim/issues
+- GitHub Issues: https://github.com/SAKErobotics/MuJoCo_ezgripper_sim/issues
 - Email: support@sakerobotics.com
