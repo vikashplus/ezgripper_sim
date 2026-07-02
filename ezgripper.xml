@@ -199,6 +199,10 @@
 
     <sensor>
         <tendonpos name="gripper_tendon" tendon="finger1_tendon"/>
+        <jointpos name="F1_palm_knuckle" joint="F1_palm_knuckle"/>
+        <jointpos name="F1_knuckle_tip"  joint="F1_knuckle_tip"/>
+        <jointpos name="F2_palm_knuckle" joint="F2_palm_knuckle"/>
+        <jointpos name="F2_knuckle_tip"  joint="F2_knuckle_tip"/>
     </sensor>
 
     <!-- SINGLE ACTUATOR: Controls both tendons via equality constraint -->
