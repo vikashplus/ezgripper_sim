@@ -198,7 +198,8 @@
     </equality>
 
     <sensor>
-        <tendonpos name="gripper_tendon" tendon="finger1_tendon"/>
+        <tendonpos   name="gripper_pos" tendon="finger1_tendon"/>
+        <actuatorfrc name="gripper_effort" actuator="gripper_actuator"/>
     </sensor>
 
     <!-- SINGLE ACTUATOR: Controls both tendons via equality constraint -->
